@@ -382,12 +382,12 @@ VOID USBX_APP_Host_Init(VOID)
   /* USER CODE BEGIN USB_Host_Init_PreTreatment1 */
 
   /* Start Application Message */
-  USBH_UsrLog(" **** USB OTG HS in FS MSC Host **** \n");
-  USBH_UsrLog("USB Host library started.\n");
+//  USBH_UsrLog(" **** USB OTG HS in FS MSC Host **** \n");
+//  USBH_UsrLog("USB Host library started.\n");
 
   /* Wait for Device to be attached */
-  USBH_UsrLog("Starting MSC Application");
-  USBH_UsrLog("Connect your MSC Device");
+//  USBH_UsrLog("Starting MSC Application");
+//  USBH_UsrLog("Connect your MSC Device");
 
   /* USER CODE END USB_Host_Init_PreTreatment1 */
 

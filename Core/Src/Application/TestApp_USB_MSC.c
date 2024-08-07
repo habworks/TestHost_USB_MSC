@@ -207,7 +207,7 @@ static void LED_Toggle(void *NotUsed)
     STATUS_LED_TOGGLE();
     GPIO_PinState PinState = STATUS_LED_STATUS();
     if (PinState == GPIO_PIN_SET)
-        printf("LED is on\r\n");
-    else
         printf("LED is off\r\n");
+    else
+        printf("LED is on\r\n");
 }
