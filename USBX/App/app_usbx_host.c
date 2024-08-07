@@ -207,9 +207,9 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
           /* Get current Storage Instance */
           storage = (UX_HOST_CLASS_STORAGE *)current_instance;
 
-          USBH_UsrLog("\nUSB Mass Storage Device Plugged");
-          USBH_UsrLog("PID: %#x ", (UINT)storage -> ux_host_class_storage_device -> ux_device_descriptor.idProduct);
-          USBH_UsrLog("VID: %#x ", (UINT)storage -> ux_host_class_storage_device -> ux_device_descriptor.idVendor);
+//          USBH_UsrLog("\nUSB Mass Storage Device Plugged");
+//          USBH_UsrLog("PID: %#x ", (UINT)storage -> ux_host_class_storage_device -> ux_device_descriptor.idProduct);
+//          USBH_UsrLog("VID: %#x ", (UINT)storage -> ux_host_class_storage_device -> ux_device_descriptor.idVendor);
 
           /* Get the storage media */
           storage_media = (UX_HOST_CLASS_STORAGE_MEDIA *)current_class -> ux_host_class_media;
@@ -249,7 +249,12 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
         storage_media = UX_NULL;
         USB_Media = UX_NULL;
 
-        USBH_UsrLog("\nUSB Mass Storage Device Unplugged");
+        if (tx_event_flags_set(&USB_EventFlag, USB_EVENT_MSC_REMOVED, TX_OR) != TX_SUCCESS)
+        {
+          Error_Handler();
+        }
+
+//        USBH_UsrLog("\nUSB Mass Storage Device Unplugged");
       }
       /* USER CODE END UX_DEVICE_REMOVAL */
 

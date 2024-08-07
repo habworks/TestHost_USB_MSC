@@ -38,6 +38,7 @@ extern"C" {
 
 // DEFINES
 #define HARDWARE_INIT_OK                    (0U)
+#define TEST_FILE_NAME                      "Test_USB_MSC.txt"
 
 
 // TYPEDEFS AND ENUMS

@@ -30,6 +30,7 @@
 #include "DebugPort.h"
 #include "TerminalEmulatorSupport.h"
 #include "UART.h"
+#include "FileX_FS.h"
 #include <stdio.h>
 
 
@@ -66,8 +67,13 @@ VOID testAppMainTask(ULONG InitValue)
         if (USB_CDC_EventFlag == USB_EVENT_MSC_INSERTED)
         {
             printf("USB Flash Drive Inserted\r\n");
+            printf("Test File: %s ", TEST_FILE_NAME);
+            if (FileX_FS_FileExists(USB_Media, TEST_FILE_NAME))
+                printf("Found on Flash Drive\r\n");
+            else
+                printf("NOT Found on Flash Drive\r\n");
         }
-        else if (USB_CDC_EventFlag == USB_EVENT_CDC_REMOVED)
+        else if (USB_CDC_EventFlag == USB_EVENT_MSC_REMOVED)
         {
             printf("USB Flash Drive Removed\r\n");
         }
