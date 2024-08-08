@@ -52,12 +52,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define USBH_UsrLog(...)   printf(__VA_ARGS__);\
-                           printf("\n");
 
-#define USBH_ErrLog(...)   printf("ERROR: ") ;\
-                           printf(__VA_ARGS__);\
-                           printf("\n");
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

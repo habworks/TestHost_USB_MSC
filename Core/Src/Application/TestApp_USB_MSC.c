@@ -31,7 +31,6 @@
 #include "TerminalEmulatorSupport.h"
 #include "UART.h"
 #include "FileX_FS.h"
-//#include "usb_otg.h"
 #include "app_usbx_host.h"
 #include <stdio.h>
 

@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "TestApp_USB_MSC.h"
 #include "IO_Support.h"
+#include "usb_otg.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -144,22 +145,6 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
   }
 
   /* USER CODE BEGIN MX_USBX_Host_Init1 */
-
-  /* Allocate the stack for storage app thread  */
-//    if (tx_byte_allocate(byte_pool, (VOID **) &pointer,
-//                         UX_HOST_APP_THREAD_STACK_SIZE, TX_NO_WAIT) != TX_SUCCESS)
-//    {
-//      return TX_POOL_ERROR;
-//    }
-
-    /* Create the storage applicative process thread */
-//    if (tx_thread_create(&msc_app_thread, "MSC App thread", msc_process_thread_entry,
-//                         0, pointer, UX_HOST_APP_THREAD_STACK_SIZE, 30, 30, 0,
-//                         TX_AUTO_START) != TX_SUCCESS)
-//    {
-//      return TX_THREAD_ERROR;
-//    }
-
     /* Create the event flags group */
     if (!USB_EventFlagCreated)
     {
@@ -169,7 +154,6 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
           return TX_GROUP_ERROR;
         }
     }
-
   /* USER CODE END MX_USBX_Host_Init1 */
 
   return ret;
@@ -201,8 +185,8 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
   UINT status = UX_SUCCESS;
 
   /* USER CODE BEGIN ux_host_event_callback0 */
-  UX_PARAMETER_NOT_USED(current_class);
-  UX_PARAMETER_NOT_USED(current_instance);
+//  UX_PARAMETER_NOT_USED(current_class);
+//  UX_PARAMETER_NOT_USED(current_instance);
   /* USER CODE END ux_host_event_callback0 */
 
   switch (event)
@@ -217,10 +201,6 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
         {
           /* Get current Storage Instance */
           storage = (UX_HOST_CLASS_STORAGE *)current_instance;
-
-//          USBH_UsrLog("\nUSB Mass Storage Device Plugged");
-//          USBH_UsrLog("PID: %#x ", (UINT)storage -> ux_host_class_storage_device -> ux_device_descriptor.idProduct);
-//          USBH_UsrLog("VID: %#x ", (UINT)storage -> ux_host_class_storage_device -> ux_device_descriptor.idVendor);
 
           /* Get the storage media */
           storage_media = (UX_HOST_CLASS_STORAGE_MEDIA *)current_class -> ux_host_class_media;
@@ -264,8 +244,6 @@ UINT ux_host_event_callback(ULONG event, UX_HOST_CLASS *current_class, VOID *cur
         {
           Error_Handler();
         }
-
-//        USBH_UsrLog("\nUSB Mass Storage Device Unplugged");
       }
       /* USER CODE END UX_DEVICE_REMOVAL */
 
@@ -401,14 +379,6 @@ VOID USBX_APP_Host_Init(VOID)
 
   /* USER CODE BEGIN USB_Host_Init_PreTreatment1 */
 
-  /* Start Application Message */
-//  USBH_UsrLog(" **** USB OTG HS in FS MSC Host **** \n");
-//  USBH_UsrLog("USB Host library started.\n");
-
-  /* Wait for Device to be attached */
-//  USBH_UsrLog("Starting MSC Application");
-//  USBH_UsrLog("Connect your MSC Device");
-
   /* USER CODE END USB_Host_Init_PreTreatment1 */
 
 }
@@ -444,74 +414,101 @@ void USBH_DriverVBUS(uint8_t state)
     /* USER CODE END DRIVE_LOW_CHARGE_FOR_FS */
   }
 
-  HAL_Delay(200);
+  HAL_Delay(500);
 }
 
 
+/*******************************************************************************************************
+* @brief Uninitialize the USBX as a host.  This is the opposite function to MX_USBX_Host_Init.  They are
+* seven steps that are performed in the MX_USBX_Host_Init process.  This function reverses / removes the
+* affect of those actions.  The steps performed are:
+* 1. Allocated memory of the USBX stack
+* 2. Initialized USBX Memory
+* 3. Install the host portion of USBX
+* 4. Register callback error function
+* 5. Initialized the host storage class
+* 6. Allocated memory of the Host application main thread
+* 7. Create the host application main thread
+*
+* @author original: Hab Collector \n
+*
+* @return True if file found
+*
+* STEP 1: Reverse the operation of the function MX_USBX_Host_Init
+* STEP 2: Return the result: Ux result as MSB, Tx as LSB
+********************************************************************************************************/
 uint16_t MX_USBX_Host_UnInit(void)
 {
     UINT Tx_Status = TX_SUCCESS;
     UINT Ux_Status = UX_SUCCESS;
 
-//    // 1. Release the allocated memory of the USBX stack
-//    Status = tx_byte_release((VOID *)USBX_AllocatedStackMemoryPtr);
-//
-//    // 2. Uninitialized USBX Memory
-//    ux_system_uninitialize();
-//
-//    // 3. Un-install the host portion of USBX
-//    ux_host_stack_uninitialize();
-//
-//    // 4. Unregister callback error function
-//    ux_utility_error_callback_register(NULL);
-//
-//    // 5. Uninitialized the host storage class
-//    ux_host_stack_class_unregister(ux_host_class_storage_entry);
-//
-//    // 6. Release the allocated memory of the Host application main thread
-//    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
-//
-//    // 7. Delete the host application main thread
-//    Tx_Status = tx_thread_delete(&ux_host_app_thread);
-
-
-
+    // STEP 1: Reverse the operation of the function MX_USBX_Host_Init
     // 7. Delete the host application main thread
     Tx_Status = tx_thread_delete(&ux_host_app_thread);
 
     // 6. Release the allocated memory of the Host application main thread
-    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
+    if ((Tx_Status == TX_SUCCESS) && (Ux_Status == UX_SUCCESS))
+        Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
 
     // 5. Uninitialized the host storage class
-    Ux_Status = ux_host_stack_class_unregister(ux_host_class_storage_entry);
+    if ((Tx_Status == TX_SUCCESS) && (Ux_Status == UX_SUCCESS))
+        Ux_Status = ux_host_stack_class_unregister(ux_host_class_storage_entry);
 
     // 4. Unregister callback error function
     ux_utility_error_callback_register(NULL);
 
     // 3. Un-install the host portion of USBX
-    Ux_Status = ux_host_stack_uninitialize();
+    if ((Tx_Status == TX_SUCCESS) && (Ux_Status == UX_SUCCESS))
+        Ux_Status = ux_host_stack_uninitialize();
 
     // 2. Uninitialized USBX Memory
-    Ux_Status = ux_system_uninitialize();
+    if ((Tx_Status == TX_SUCCESS) && (Ux_Status == UX_SUCCESS))
+        Ux_Status = ux_system_uninitialize();
 
     // 1. Release the allocated memory of the USBX stack
-    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedStackMemoryPtr);
+    if ((Tx_Status == TX_SUCCESS) && (Ux_Status == UX_SUCCESS))
+        Tx_Status = tx_byte_release((VOID *)USBX_AllocatedStackMemoryPtr);
 
+    // STEP 2: Return the result: Ux result as MSB, Tx as LSB
     uint16_t Status = Ux_Status & 0xFF;
     Status = Status << 8;
     Status = Status | (Tx_Status & 0xFF);
     return(Status);
-}
+
+} // END OF MX_USBX_Host_UnInit
 
 
+
+/*******************************************************************************************************
+* @brief Un-initialize the USBX host application.  This is the opposite function to USBX_APP_Host_Init.  They are
+* four steps that are performed in the USBX_APP_Host_Init process.  This function reverses / removes the
+* affect of those actions.  The steps performed are:
+* 1. Initialize the LL driver
+* 2. Register all the USB host controllers available in this system
+* 3. Drive VBus
+* 4. Enable USB Global Interrupt
+*
+* @note This function will not undo the LL driver init (step 1).  The function USBX_APP_Host_Init includes
+* a flag where by the LL driver is only init once.
+*
+* @author original: Hab Collector \n
+*
+* @return True if file found
+*
+* STEP 1: Reverse the operation of the function USBX_APP_Host_Init
+********************************************************************************************************/
 void USBX_APP_Host_UnInit(void)
 {
-//    HAL_HCD_MspDeInit(&hhcd_USB_OTG_FS);
-//    USBH_DriverVBUS(0);
-
+    // STEP 1: Reverse the operation of the function USBX_APP_Host_Init
+    // 4. Disable USB Global Interrupt
     HAL_HCD_Stop(&hhcd_USB_OTG_FS);
+
+    // 3. Disable VBus
     USBH_DriverVBUS(0);
+
+    // 2. Un-regisister USB host controllers in the system
     ux_host_stack_hcd_unregister(_ux_system_host_hcd_stm32_name, USB_OTG_FS_PERIPH_BASE, (ULONG)&hhcd_USB_OTG_FS);
 
-}
+}  // END OF USBX_APP_Host_UnInit
+
 /* USER CODE END 1 */
