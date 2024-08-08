@@ -56,6 +56,7 @@ TX_EVENT_FLAGS_GROUP        USB_EventFlag;
 UCHAR *USBX_AllocatedStackMemoryPtr;
 UCHAR *USBX_AllocatedHostAppTaskPtr;
 bool USB_EventFlagCreated = false;
+bool USB_OTG_FS_HCD_Init = false;
 
 extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
 /* USER CODE END PV */
@@ -381,7 +382,11 @@ VOID USBX_APP_Host_Init(VOID)
   /* USER CODE END USB_Host_Init_PreTreatment_0 */
 
   /* Initialize the LL driver */
-  MX_USB_OTG_FS_HCD_Init();
+  if (!USB_OTG_FS_HCD_Init)
+  {
+      USB_OTG_FS_HCD_Init = true;
+      MX_USB_OTG_FS_HCD_Init();
+  }
 
   /* Register all the USB host controllers available in this system. */
   ux_host_stack_hcd_register(_ux_system_host_hcd_stm32_name,
@@ -501,7 +506,12 @@ uint16_t MX_USBX_Host_UnInit(void)
 
 void USBX_APP_Host_UnInit(void)
 {
-    HAL_HCD_MspDeInit(&hhcd_USB_OTG_FS);
+//    HAL_HCD_MspDeInit(&hhcd_USB_OTG_FS);
+//    USBH_DriverVBUS(0);
+
+    HAL_HCD_Stop(&hhcd_USB_OTG_FS);
     USBH_DriverVBUS(0);
+    ux_host_stack_hcd_unregister(_ux_system_host_hcd_stm32_name, USB_OTG_FS_PERIPH_BASE, (ULONG)&hhcd_USB_OTG_FS);
+
 }
 /* USER CODE END 1 */

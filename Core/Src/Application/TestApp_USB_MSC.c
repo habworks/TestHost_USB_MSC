@@ -229,6 +229,7 @@ static void massStorageClassDisable(void *NotUsed)
 {
     USBX_APP_Host_UnInit();
     MX_USBX_Host_UnInit();
+    printf("USB MSC Turned off\r\n");
 }
 
 extern TX_BYTE_POOL *Ux_HostAppBytePool;
@@ -238,4 +239,5 @@ static void massStorageClassEnable(void *NotUsed)
     MemoryPointer = (VOID *)Ux_HostAppBytePool;
     if (MX_USBX_Host_Init(MemoryPointer) != UX_SUCCESS)
         while(1);
+    printf("USB MSC Turned on\r\n");
 }
