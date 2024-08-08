@@ -53,6 +53,9 @@ UX_HOST_CLASS_STORAGE_MEDIA *storage_media;
 FX_MEDIA                    *USB_Media;
 TX_EVENT_FLAGS_GROUP        USB_EventFlag;
 
+UCHAR *USBX_AllocatedStackMemoryPtr;
+UCHAR *USBX_AllocatedHostAppTaskPtr;
+
 extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
 /* USER CODE END PV */
 
@@ -87,6 +90,7 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
     return TX_POOL_ERROR;
     /* USER CODE END USBX_ALLOCATE_STACK_ERORR */
   }
+  USBX_AllocatedStackMemoryPtr = pointer;
 
   /* Initialize USBX Memory */
   if (ux_system_initialize(pointer, USBX_HOST_MEMORY_STACK_SIZE, UX_NULL, 0) != UX_SUCCESS)
@@ -124,6 +128,7 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
     return TX_POOL_ERROR;
     /* USER CODE END MAIN_THREAD_ALLOCATE_STACK_ERORR */
   }
+  USBX_AllocatedHostAppTaskPtr = pointer;
 
   /* Create the host application main thread */
   if (tx_thread_create(&ux_host_app_thread, UX_HOST_APP_THREAD_NAME, app_ux_host_thread_entry,
@@ -138,7 +143,7 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
 
   /* USER CODE BEGIN MX_USBX_Host_Init1 */
 
-  /* Allocate the stack for storrage app thread  */
+  /* Allocate the stack for storage app thread  */
     if (tx_byte_allocate(byte_pool, (VOID **) &pointer,
                          UX_HOST_APP_THREAD_STACK_SIZE, TX_NO_WAIT) != TX_SUCCESS)
     {
@@ -430,5 +435,35 @@ void USBH_DriverVBUS(uint8_t state)
   }
 
   HAL_Delay(200);
+}
+
+
+UINT MX_USBX_Host_DeInit(void)
+{
+    UINT Tx_Status = TX_SUCCESS;
+    UINT Ux_Status = UX_SUCCESS;
+
+    // Release the allocated memory of the USBX stack
+    Status = tx_byte_release((VOID *)USBX_AllocatedMemoryPtr);
+
+    // Uninitialized USBX Memory
+    ux_system_uninitialize();
+
+    // Un-install the host portion of USBX
+    ux_host_stack_uninitialize();
+
+    // Unregister callback error function
+    ux_utility_error_callback_register(NULL);
+
+    // Uninitialized the host storage class
+    ux_host_stack_class_unregister(ux_host_class_storage_entry);
+
+    // Release the allocated memory of the Host application main thread
+    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
+
+    // Delete the host application main thread
+    Tx_Status = tx_thread_delete(&ux_host_app_thread);
+
+    return(Status);
 }
 /* USER CODE END 1 */

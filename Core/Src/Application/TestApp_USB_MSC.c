@@ -31,6 +31,8 @@
 #include "TerminalEmulatorSupport.h"
 #include "UART.h"
 #include "FileX_FS.h"
+#include "usb_otg.h"
+#include "app_usbx_host.h"
 #include <stdio.h>
 
 
@@ -43,12 +45,16 @@ extern FX_MEDIA *USB_Media;
 // Power toggle test commands
 static void TPx_Toggle(void *TestPoint);
 static void LED_Toggle(void *NotUsed);
+static void massStorageClassDisable(void *NotUsed);
+static void massStorageClassEnable(void *NotUsed);
 
 VOID testAppMainTask(ULONG InitValue)
 {
     // STEP 1: Add debug commands associated with the Spokane Task
     debugConsoleCommandAdd(TestApp.DebugConsole, "Toggle ", "Toggle TP<x> (x: 9, 10, 11)", TPx_Toggle, PARTIAL);
     debugConsoleCommandAdd(TestApp.DebugConsole, "LED", "Toggle LED power", LED_Toggle, COMPLETE);
+    debugConsoleCommandAdd(TestApp.DebugConsole, "MSC Off", "Disable MSC", massStorageClassDisable, COMPLETE);
+    debugConsoleCommandAdd(TestApp.DebugConsole, "MSC On", "Enable MSC", massStorageClassEnable, COMPLETE);
 
     // STEP 2: Show start up message
     terminal_SetDefaultForegroundColor();
@@ -216,4 +222,16 @@ static void LED_Toggle(void *NotUsed)
         printf("LED is off\r\n");
     else
         printf("LED is on\r\n");
+}
+
+
+static void massStorageClassDisable(void *NotUsed)
+{
+    HAL_HCD_MspDeInit();
+    USBH_DriverVBUS(0);
+}
+
+static void massStorageClassEnable(void *NotUsed)
+{
+
 }
