@@ -66,7 +66,8 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr);
 /* USER CODE BEGIN EFP */
 VOID USBX_APP_Host_Init(VOID);
 void USBH_DriverVBUS(uint8_t state);
-UINT MX_USBX_Host_DeInit(void);
+uint16_t MX_USBX_Host_UnInit(void);
+void USBX_APP_Host_UnInit(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

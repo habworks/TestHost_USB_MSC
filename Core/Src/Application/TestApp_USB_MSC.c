@@ -31,7 +31,7 @@
 #include "TerminalEmulatorSupport.h"
 #include "UART.h"
 #include "FileX_FS.h"
-#include "usb_otg.h"
+//#include "usb_otg.h"
 #include "app_usbx_host.h"
 #include <stdio.h>
 
@@ -227,11 +227,15 @@ static void LED_Toggle(void *NotUsed)
 
 static void massStorageClassDisable(void *NotUsed)
 {
-    HAL_HCD_MspDeInit();
-    USBH_DriverVBUS(0);
+    USBX_APP_Host_UnInit();
+    MX_USBX_Host_UnInit();
 }
 
+extern TX_BYTE_POOL *Ux_HostAppBytePool;
 static void massStorageClassEnable(void *NotUsed)
 {
-
+    VOID *MemoryPointer;
+    MemoryPointer = (VOID *)Ux_HostAppBytePool;
+    if (MX_USBX_Host_Init(MemoryPointer) != UX_SUCCESS)
+        while(1);
 }

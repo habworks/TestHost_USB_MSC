@@ -55,6 +55,7 @@ TX_EVENT_FLAGS_GROUP        USB_EventFlag;
 
 UCHAR *USBX_AllocatedStackMemoryPtr;
 UCHAR *USBX_AllocatedHostAppTaskPtr;
+bool USB_EventFlagCreated = false;
 
 extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
 /* USER CODE END PV */
@@ -144,11 +145,11 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
   /* USER CODE BEGIN MX_USBX_Host_Init1 */
 
   /* Allocate the stack for storage app thread  */
-    if (tx_byte_allocate(byte_pool, (VOID **) &pointer,
-                         UX_HOST_APP_THREAD_STACK_SIZE, TX_NO_WAIT) != TX_SUCCESS)
-    {
-      return TX_POOL_ERROR;
-    }
+//    if (tx_byte_allocate(byte_pool, (VOID **) &pointer,
+//                         UX_HOST_APP_THREAD_STACK_SIZE, TX_NO_WAIT) != TX_SUCCESS)
+//    {
+//      return TX_POOL_ERROR;
+//    }
 
     /* Create the storage applicative process thread */
 //    if (tx_thread_create(&msc_app_thread, "MSC App thread", msc_process_thread_entry,
@@ -159,9 +160,13 @@ UINT MX_USBX_Host_Init(VOID *memory_ptr)
 //    }
 
     /* Create the event flags group */
-    if (tx_event_flags_create(&USB_EventFlag, "Event Flag") != TX_SUCCESS)
+    if (!USB_EventFlagCreated)
     {
-      return TX_GROUP_ERROR;
+        USB_EventFlagCreated = true;
+        if (tx_event_flags_create(&USB_EventFlag, "USB Event Flag") != TX_SUCCESS)
+        {
+          return TX_GROUP_ERROR;
+        }
     }
 
   /* USER CODE END MX_USBX_Host_Init1 */
@@ -438,32 +443,65 @@ void USBH_DriverVBUS(uint8_t state)
 }
 
 
-UINT MX_USBX_Host_DeInit(void)
+uint16_t MX_USBX_Host_UnInit(void)
 {
     UINT Tx_Status = TX_SUCCESS;
     UINT Ux_Status = UX_SUCCESS;
 
-    // Release the allocated memory of the USBX stack
-    Status = tx_byte_release((VOID *)USBX_AllocatedMemoryPtr);
+//    // 1. Release the allocated memory of the USBX stack
+//    Status = tx_byte_release((VOID *)USBX_AllocatedStackMemoryPtr);
+//
+//    // 2. Uninitialized USBX Memory
+//    ux_system_uninitialize();
+//
+//    // 3. Un-install the host portion of USBX
+//    ux_host_stack_uninitialize();
+//
+//    // 4. Unregister callback error function
+//    ux_utility_error_callback_register(NULL);
+//
+//    // 5. Uninitialized the host storage class
+//    ux_host_stack_class_unregister(ux_host_class_storage_entry);
+//
+//    // 6. Release the allocated memory of the Host application main thread
+//    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
+//
+//    // 7. Delete the host application main thread
+//    Tx_Status = tx_thread_delete(&ux_host_app_thread);
 
-    // Uninitialized USBX Memory
-    ux_system_uninitialize();
 
-    // Un-install the host portion of USBX
-    ux_host_stack_uninitialize();
 
-    // Unregister callback error function
-    ux_utility_error_callback_register(NULL);
-
-    // Uninitialized the host storage class
-    ux_host_stack_class_unregister(ux_host_class_storage_entry);
-
-    // Release the allocated memory of the Host application main thread
-    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
-
-    // Delete the host application main thread
+    // 7. Delete the host application main thread
     Tx_Status = tx_thread_delete(&ux_host_app_thread);
 
+    // 6. Release the allocated memory of the Host application main thread
+    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedHostAppTaskPtr);
+
+    // 5. Uninitialized the host storage class
+    Ux_Status = ux_host_stack_class_unregister(ux_host_class_storage_entry);
+
+    // 4. Unregister callback error function
+    ux_utility_error_callback_register(NULL);
+
+    // 3. Un-install the host portion of USBX
+    Ux_Status = ux_host_stack_uninitialize();
+
+    // 2. Uninitialized USBX Memory
+    Ux_Status = ux_system_uninitialize();
+
+    // 1. Release the allocated memory of the USBX stack
+    Tx_Status = tx_byte_release((VOID *)USBX_AllocatedStackMemoryPtr);
+
+    uint16_t Status = Ux_Status & 0xFF;
+    Status = Status << 8;
+    Status = Status | (Tx_Status & 0xFF);
     return(Status);
+}
+
+
+void USBX_APP_Host_UnInit(void)
+{
+    HAL_HCD_MspDeInit(&hhcd_USB_OTG_FS);
+    USBH_DriverVBUS(0);
 }
 /* USER CODE END 1 */
